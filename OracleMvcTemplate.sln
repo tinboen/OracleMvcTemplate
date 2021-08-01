@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31424.327
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OracleMvcTemplate", "OracleMvcTemplate.csproj", "{A14994E5-4166-454A-AAC5-FC8ACFCD6E2C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MvcTemplate.ResourceLibrary", "ResourceLibrary\MvcTemplate.ResourceLibrary.csproj", "{50E96495-4B69-4C02-8727-8540A5011C5F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MvcTemplate.WebApplication", "WebApplication\MvcTemplate.WebApplication.csproj", "{2A2E9781-4911-4115-828F-08C159818CAD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A14994E5-4166-454A-AAC5-FC8ACFCD6E2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A14994E5-4166-454A-AAC5-FC8ACFCD6E2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A14994E5-4166-454A-AAC5-FC8ACFCD6E2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A14994E5-4166-454A-AAC5-FC8ACFCD6E2C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{50E96495-4B69-4C02-8727-8540A5011C5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50E96495-4B69-4C02-8727-8540A5011C5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50E96495-4B69-4C02-8727-8540A5011C5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{50E96495-4B69-4C02-8727-8540A5011C5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A2E9781-4911-4115-828F-08C159818CAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A2E9781-4911-4115-828F-08C159818CAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A2E9781-4911-4115-828F-08C159818CAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A2E9781-4911-4115-828F-08C159818CAD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
