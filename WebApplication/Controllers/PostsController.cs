@@ -5,10 +5,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using OracleMvcTemplate.Data;
-using OracleMvcTemplate.Models;
+using MvcTemplate.WebApplication.Models;
+using static MvcTemplate.WebApplication.Helper;
+using MvcTemplate.WebApplication.Data;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Http;
 
-namespace OracleMvcTemplate.Controllers
+namespace MvcTemplate.WebApplication.Controllers
 {
     public class PostsController : Controller
     {
@@ -19,110 +22,65 @@ namespace OracleMvcTemplate.Controllers
             _context = context;
         }
 
-        // GET: Posts
+        // GET: Post
         public async Task<IActionResult> Index()
         {
-            var oracleDbContext = _context.Posts.Include(p => p.Blog);
-            return View(await oracleDbContext.ToListAsync());
+            return View(await _context.Posts.ToListAsync());
         }
 
-        // GET: Posts/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: Post/AddOrEdit(Insert)
+        // GET: Post/AddOrEdit/5(Update)
+        [NoDirectAccess]
+        public async Task<IActionResult> AddOrEdit(int id = 0)
         {
-            if (id == null)
+            if (id == 0)
+                return View(new Post());
+            else
             {
-                return NotFound();
-            }
-
-            var post = await _context.Posts
-                .Include(p => p.Blog)
-                .FirstOrDefaultAsync(m => m.PostId == id);
-            if (post == null)
-            {
-                return NotFound();
-            }
-
-            return View(post);
-        }
-
-        // GET: Posts/Create
-        public IActionResult Create()
-        {
-            ViewData["BlogId"] = new SelectList(_context.Blogs, "BlogId", "BlogId");
-            return View();
-        }
-
-        // POST: Posts/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("PostId,Title,Content,BlogId")] Post post)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(post);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["BlogId"] = new SelectList(_context.Blogs, "BlogId", "BlogId", post.BlogId);
-            return View(post);
-        }
-
-        // GET: Posts/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var post = await _context.Posts.FindAsync(id);
-            if (post == null)
-            {
-                return NotFound();
-            }
-            ViewData["BlogId"] = new SelectList(_context.Blogs, "BlogId", "BlogId", post.BlogId);
-            return View(post);
-        }
-
-        // POST: Posts/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("PostId,Title,Content,BlogId")] Post post)
-        {
-            if (id != post.PostId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
+                var model = await _context.Posts.FindAsync(id);
+                if (model == null)
                 {
-                    _context.Update(post);
+                    return NotFound();
+                }
+                return View(model);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddOrEdit(int id, [Bind("PostId,Title,Content")] Post model)
+        {
+            if (ModelState.IsValid)
+            {
+                //Insert
+                if (id == 0)
+                {
+                    _context.Add(model);
                     await _context.SaveChangesAsync();
+
                 }
-                catch (DbUpdateConcurrencyException)
+                //Update
+                else
                 {
-                    if (!PostExists(post.PostId))
+                    try
                     {
-                        return NotFound();
+                        _context.Update(model);
+                        await _context.SaveChangesAsync();
                     }
-                    else
+                    catch (DbUpdateConcurrencyException)
                     {
-                        throw;
+                        if (!PostExists(model.PostId))
+                        { return NotFound(); }
+                        else
+                        { throw; }
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return Json(new { isValid = true, html = Helper.RenderRazorViewToString(this, "_ViewAll", _context.Posts.ToList()) });
             }
-            ViewData["BlogId"] = new SelectList(_context.Blogs, "BlogId", "BlogId", post.BlogId);
-            return View(post);
+            return Json(new { isValid = false, html = Helper.RenderRazorViewToString(this, "AddOrEdit", model) });
         }
 
-        // GET: Posts/Delete/5
+        // GET: Post/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -130,26 +88,25 @@ namespace OracleMvcTemplate.Controllers
                 return NotFound();
             }
 
-            var post = await _context.Posts
-                .Include(p => p.Blog)
+            var model = await _context.Posts
                 .FirstOrDefaultAsync(m => m.PostId == id);
-            if (post == null)
+            if (model == null)
             {
                 return NotFound();
             }
 
-            return View(post);
+            return View(model);
         }
 
-        // POST: Posts/Delete/5
+        // POST: Post/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var post = await _context.Posts.FindAsync(id);
-            _context.Posts.Remove(post);
+            var model = await _context.Posts.FindAsync(id);
+            _context.Posts.Remove(model);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return Json(new { html = Helper.RenderRazorViewToString(this, "_ViewAll", _context.Posts.ToList()) });
         }
 
         private bool PostExists(int id)

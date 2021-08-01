@@ -5,10 +5,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using OracleMvcTemplate.Data;
-using OracleMvcTemplate.Models;
+using MvcTemplate.WebApplication.Models;
+using static MvcTemplate.WebApplication.Helper;
+using MvcTemplate.WebApplication.Data;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Http;
 
-namespace OracleMvcTemplate.Controllers
+namespace MvcTemplate.WebApplication.Controllers
 {
     public class TransactionsController : Controller
     {
@@ -19,105 +22,67 @@ namespace OracleMvcTemplate.Controllers
             _context = context;
         }
 
-        // GET: Transactions
+        // GET: Transaction
         public async Task<IActionResult> Index()
         {
             return View(await _context.Transactions.ToListAsync());
         }
 
-        // GET: Transactions/Details/5
-        public async Task<IActionResult> Details(byte? id)
+        // GET: Transaction/AddOrEdit(Insert)
+        // GET: Transaction/AddOrEdit/5(Update)
+        [NoDirectAccess]
+        public async Task<IActionResult> AddOrEdit(int id = 0)
         {
-            if (id == null)
+            if (id == 0)
+                return View(new Transaction());
+            else
             {
-                return NotFound();
-            }
-
-            var model = await _context.Transactions
-                .FirstOrDefaultAsync(m => m.TransactionId == id);
-            if (model == null)
-            {
-                return NotFound();
-            }
-
-            return View(model);
-        }
-
-        // GET: Transactions/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Transactions/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("AccountNumber,BeneficiaryName,BankName,SwiftCode,Amount,TransactionDate,Column1,TransactionId")] Transaction model)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(model);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(model);
-        }
-
-        // GET: Transactions/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var model = await _context.Transactions.FindAsync(id);
-            if (model == null)
-            {
-                return NotFound();
-            }
-            return View(model);
-        }
-
-        // POST: Transactions/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("AccountNumber,BeneficiaryName,BankName,SwiftCode,Amount,TransactionDate,TransactionId")] Transaction model)
-        {
-            if (id != model.TransactionId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
+                var model = await _context.Transactions.FindAsync(id);
+                if (model == null)
                 {
-                    _context.Update(model);
+                    return NotFound();
+                }
+                return View(model);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddOrEdit(int id, [Bind("TransactionId,AccountNumber,BeneficiaryName,BankName,SwiftCode,Amount,TransactionDate")] Transaction model)
+        {
+            if (ModelState.IsValid)
+            {
+                //Insert
+                if (id == 0)
+                {
+                    model.TransactionDate = DateTime.Now;
+                    _context.Add(model);
                     await _context.SaveChangesAsync();
+
                 }
-                catch (DbUpdateConcurrencyException)
+                //Update
+                else
                 {
-                    if (!TransactionExists(model.TransactionId))
+                    try
                     {
-                        return NotFound();
+                        _context.Update(model);
+                        await _context.SaveChangesAsync();
                     }
-                    else
+                    catch (DbUpdateConcurrencyException)
                     {
-                        throw;
+                        if (!TransactionExists(model.TransactionId))
+                        { return NotFound(); }
+                        else
+                        { throw; }
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return Json(new { isValid = true, html = Helper.RenderRazorViewToString(this, "_ViewAll", _context.Transactions.ToList()) });
             }
-            return View(model);
+            return Json(new { isValid = false, html = Helper.RenderRazorViewToString(this, "AddOrEdit", model) });
         }
 
-        // GET: Transactions/Delete/5
-        public async Task<IActionResult> Delete(byte? id)
+        // GET: Transaction/Delete/5
+        public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
             {
@@ -134,15 +99,15 @@ namespace OracleMvcTemplate.Controllers
             return View(model);
         }
 
-        // POST: Transactions/Delete/5
+        // POST: Transaction/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(byte id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var model = await _context.Transactions.FindAsync(id);
             _context.Transactions.Remove(model);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return Json(new { html = Helper.RenderRazorViewToString(this, "_ViewAll", _context.Transactions.ToList()) });
         }
 
         private bool TransactionExists(int id)

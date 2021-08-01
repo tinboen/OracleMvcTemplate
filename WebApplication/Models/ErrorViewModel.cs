@@ -1,6 +1,6 @@
 using System;
 
-namespace OracleMvcTemplate.Models
+namespace MvcTemplate.WebApplication.Models
 {
     public class ErrorViewModel
     {

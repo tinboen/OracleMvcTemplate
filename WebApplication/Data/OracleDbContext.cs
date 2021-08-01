@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using OracleMvcTemplate.Models;
+using MvcTemplate.WebApplication.Models;
 
-namespace OracleMvcTemplate.Data
+namespace MvcTemplate.WebApplication.Data
 {
     public class OracleDbContext : DbContext
     {

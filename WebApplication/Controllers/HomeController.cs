@@ -1,21 +1,21 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using OracleMvcTemplate.Models;
+﻿using MvcTemplate.WebApplication.Models;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 
-namespace OracleMvcTemplate.Controllers
+namespace MvcTemplate.WebApplication.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly RequestLocalizationOptions _localizationOptions;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(RequestLocalizationOptions localizationOptions)
         {
-            _logger = logger;
+            _localizationOptions = localizationOptions;
         }
 
         public IActionResult Index()
@@ -32,6 +32,25 @@ namespace OracleMvcTemplate.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        [HttpPost]
+        public IActionResult SetLanguage(string language, string returnUrl)
+        {
+            var defaultFormattingCulture = _localizationOptions.DefaultRequestCulture.Culture.Name;
+            var formattingCulture = defaultFormattingCulture;
+            if (HttpContext.Request.Cookies.TryGetValue(CookieRequestCultureProvider.DefaultCookieName, out var value))
+            {
+                formattingCulture = CookieRequestCultureProvider.ParseCookieValue(value).Cultures.FirstOrDefault().Value;
+                if (string.IsNullOrEmpty(formattingCulture))
+                    formattingCulture = defaultFormattingCulture;
+            }
+
+            value = CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(formattingCulture, language));
+            var expiration = new CookieOptions { Expires = DateTime.UtcNow.AddYears(4) };
+            HttpContext.Response.Cookies.Delete(CookieRequestCultureProvider.DefaultCookieName);
+            HttpContext.Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, value, expiration);
+            return LocalRedirect(returnUrl);
         }
     }
 }

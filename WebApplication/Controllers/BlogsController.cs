@@ -5,10 +5,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using OracleMvcTemplate.Data;
-using OracleMvcTemplate.Models;
+using MvcTemplate.WebApplication.Models;
+using static MvcTemplate.WebApplication.Helper;
+using MvcTemplate.WebApplication.Data;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Http;
 
-namespace OracleMvcTemplate.Controllers
+namespace MvcTemplate.WebApplication.Controllers
 {
     public class BlogsController : Controller
     {
@@ -19,104 +22,65 @@ namespace OracleMvcTemplate.Controllers
             _context = context;
         }
 
-        // GET: Blogs
+        // GET: Blog
         public async Task<IActionResult> Index()
         {
             return View(await _context.Blogs.ToListAsync());
         }
 
-        // GET: Blogs/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: Blog/AddOrEdit(Insert)
+        // GET: Blog/AddOrEdit/5(Update)
+        [NoDirectAccess]
+        public async Task<IActionResult> AddOrEdit(int id = 0)
         {
-            if (id == null)
+            if (id == 0)
+                return View(new Blog());
+            else
             {
-                return NotFound();
-            }
-
-            var blog = await _context.Blogs
-                .FirstOrDefaultAsync(m => m.BlogId == id);
-            if (blog == null)
-            {
-                return NotFound();
-            }
-
-            return View(blog);
-        }
-
-        // GET: Blogs/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Blogs/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("BlogId,Url,Rating")] Blog blog)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(blog);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(blog);
-        }
-
-        // GET: Blogs/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var blog = await _context.Blogs.FindAsync(id);
-            if (blog == null)
-            {
-                return NotFound();
-            }
-            return View(blog);
-        }
-
-        // POST: Blogs/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("BlogId,Url,Rating")] Blog blog)
-        {
-            if (id != blog.BlogId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
+                var model = await _context.Blogs.FindAsync(id);
+                if (model == null)
                 {
-                    _context.Update(blog);
+                    return NotFound();
+                }
+                return View(model);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddOrEdit(int id, [Bind("BlogId,Url,Rating")] Blog model)
+        {
+            if (ModelState.IsValid)
+            {
+                //Insert
+                if (id == 0)
+                {
+                    _context.Add(model);
                     await _context.SaveChangesAsync();
+
                 }
-                catch (DbUpdateConcurrencyException)
+                //Update
+                else
                 {
-                    if (!BlogExists(blog.BlogId))
+                    try
                     {
-                        return NotFound();
+                        _context.Update(model);
+                        await _context.SaveChangesAsync();
                     }
-                    else
+                    catch (DbUpdateConcurrencyException)
                     {
-                        throw;
+                        if (!BlogExists(model.BlogId))
+                        { return NotFound(); }
+                        else
+                        { throw; }
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return Json(new { isValid = true, html = Helper.RenderRazorViewToString(this, "_ViewAll", _context.Blogs.ToList()) });
             }
-            return View(blog);
+            return Json(new { isValid = false, html = Helper.RenderRazorViewToString(this, "AddOrEdit", model) });
         }
 
-        // GET: Blogs/Delete/5
+        // GET: Blog/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -124,25 +88,25 @@ namespace OracleMvcTemplate.Controllers
                 return NotFound();
             }
 
-            var blog = await _context.Blogs
+            var model = await _context.Blogs
                 .FirstOrDefaultAsync(m => m.BlogId == id);
-            if (blog == null)
+            if (model == null)
             {
                 return NotFound();
             }
 
-            return View(blog);
+            return View(model);
         }
 
-        // POST: Blogs/Delete/5
+        // POST: Blog/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var blog = await _context.Blogs.FindAsync(id);
-            _context.Blogs.Remove(blog);
+            var model = await _context.Blogs.FindAsync(id);
+            _context.Blogs.Remove(model);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return Json(new { html = Helper.RenderRazorViewToString(this, "_ViewAll", _context.Blogs.ToList()) });
         }
 
         private bool BlogExists(int id)
