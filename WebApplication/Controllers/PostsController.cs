@@ -48,7 +48,7 @@ namespace MvcTemplate.WebApplication.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddOrEdit(int id, [Bind("PostId,Title,Content")] Post model)
+        public async Task<IActionResult> AddOrEdit(int id, [Bind("PostId,Title,Content,BlogId")] Post model)
         {
             if (ModelState.IsValid)
             {
